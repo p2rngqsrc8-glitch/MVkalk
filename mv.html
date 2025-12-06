@@ -7,8 +7,8 @@
   body { font-family: Arial, sans-serif; margin: 10px; }
   table { border-collapse: collapse; width: 100%; table-layout: fixed; }
   th, td { border: 1px solid #ccc; text-align: center; padding: 4px; font-size: 18px; white-space: nowrap; }
-  input { width: 50px; font-size: 18px; text-align: center; }
-  button { font-size: 18px; padding: 4px 8px; margin: 0 2px; }
+  input { width: 70px; font-size: 18px; text-align: center; }
+  button { font-size: 18px; padding: 6px 12px; margin: 0 2px; }
   #totals { margin-top: 10px; font-weight: bold; font-size: 18px; }
 </style>
 </head>
@@ -75,33 +75,4 @@ function calculateTotals() {
     let carbs = 0;
     let mv = 0;
 
-    if((isNaN(weight) || weight===0) && (isNaN(carbs100) || carbs100===0) && !isNaN(mvValue) && mvValue>0) {
-      // Ja svars un carbs tukši, bet MV ierakstīts
-      mv = mvValue;
-      carbs = mv * carbsPerMV;
-      oglihi = carbs; // parādām kopējo carbs
-    } else if(!isNaN(weight) && !isNaN(carbs100)) {
-      carbs = weight * carbs100 / 100;
-      oglihi = carbs;
-      mv = carbs / carbsPerMV;
-    }
-
-    cells[2].value = oglihi ? oglihi.toFixed(1) : '';
-    cells[3].value = mv ? mv.toFixed(1) : '';
-
-    totalCarbs += carbs || 0;
-    totalMV += mv || 0;
-  });
-
-  document.getElementById('totals').innerText = `Kopā Carbs: ${totalCarbs.toFixed(1)} g | Kopā MV: ${totalMV.toFixed(1)}`;
-}
-
-// Recalculate totals on input change
-table.addEventListener('input', calculateTotals);
-
-// Initialize totals
-calculateTotals();
-</script>
-
-</body>
-</html>
+    if((isNaN(weight) || weight===0) && (isNaN(carbs
