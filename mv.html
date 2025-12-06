@@ -5,67 +5,69 @@
 <title>MV Kalkulators</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 10px; }
-  .table-wrapper { overflow-x: auto; } /* horizontālais scroll */
-  table { border-collapse: collapse; width: 100%; table-layout: fixed; min-width: 400px; }
-  th, td { border: 1px solid #ccc; text-align: center; padding: 4px; white-space: nowrap; font-size: 20px; }
-  input { width: 60px; font-size: 20px; text-align: center; }
-  button { font-size: 20px; padding: 6px 12px; margin: 0 2px; }
-  #totals { margin-top: 10px; font-weight: bold; font-size: 20px; }
+  h2 { margin-bottom: 10px; }
 
-  /* Responsīvs fonts mazākos ekrānos (portrait iPhone) */
-  @media only screen and (max-width: 500px) {
-    th, td, input, button { font-size: 22px; }
-    input { width: 50px; }
-    button { padding: 8px 14px; }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 5px;
+    align-items: center;
+  }
+
+  .row input { 
+    flex: 1 1 60px; 
+    font-size: 22px; 
+    text-align: center; 
+    padding: 6px; 
+  }
+
+  .row button { 
+    font-size: 22px; 
+    padding: 6px 12px; 
+  }
+
+  #totals { margin-top: 10px; font-weight: bold; font-size: 22px; }
+
+  /* Responsīvs fonts mazākos ekrānos */
+  @media only screen and (max-width: 400px) {
+    .row input { flex: 1 1 50px; font-size: 24px; }
+    .row button { font-size: 24px; padding: 8px 14px; }
   }
 </style>
 </head>
 <body>
 
 <h2>MV Kalkulators</h2>
-<div class="table-wrapper">
-<table id="foodTable">
-  <thead>
-    <tr>
-      <th>Grami</th>
-      <th>Carb</th>
-      <th>Oglihi</th>
-      <th>MV</th>
-      <th>Act</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><input type="number" min="0" placeholder="g"></td>
-      <td><input type="number" min="0" placeholder="c/100g"></td>
-      <td><input type="number" min="0" placeholder="g"></td>
-      <td><input type="number" min="0" placeholder="MV"></td>
-      <td>
-        <button onclick="deleteRow(this)">-</button>
-        <button onclick="addRow(this)">+</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+
+<div id="foodContainer">
+  <div class="row">
+    <input type="number" min="0" placeholder="Grami">
+    <input type="number" min="0" placeholder="Carb">
+    <input type="number" min="0" placeholder="Oglihi">
+    <input type="number" min="0" placeholder="MV">
+    <button onclick="deleteRow(this)">-</button>
+    <button onclick="addRow(this)">+</button>
+  </div>
 </div>
 
 <div id="totals">Kopā Carbs: 0 g | Kopā MV: 0</div>
 
 <script>
 const carbsPerMV = 12; // 1 MV = 12 g ogļhidrāti
-const table = document.getElementById('foodTable').getElementsByTagName('tbody')[0];
+const container = document.getElementById('foodContainer');
 
 function addRow(btn) {
-  const row = btn.parentElement.parentElement;
+  const row = btn.parentElement;
   const newRow = row.cloneNode(true);
   newRow.querySelectorAll('input').forEach(input => input.value = '');
-  table.appendChild(newRow);
+  container.appendChild(newRow);
   calculateTotals();
 }
 
 function deleteRow(btn) {
-  const row = btn.parentElement.parentElement;
-  if(table.rows.length > 1) {
+  const row = btn.parentElement;
+  if(container.children.length > 1) {
     row.remove();
     calculateTotals();
   }
@@ -75,12 +77,12 @@ function calculateTotals() {
   let totalCarbs = 0;
   let totalMV = 0;
 
-  table.querySelectorAll('tr').forEach(row => {
-    const cells = row.querySelectorAll('input');
-    const weight = parseFloat(cells[0].value);
-    const carbs100 = parseFloat(cells[1].value);
-    let oglihi = parseFloat(cells[2].value);
-    let mvValue = parseFloat(cells[3].value);
+  container.querySelectorAll('.row').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const weight = parseFloat(inputs[0].value);
+    const carbs100 = parseFloat(inputs[1].value);
+    let oglihi = parseFloat(inputs[2].value);
+    let mvValue = parseFloat(inputs[3].value);
 
     let carbs = 0;
     let mv = 0;
@@ -95,8 +97,8 @@ function calculateTotals() {
       mv = carbs / carbsPerMV;
     }
 
-    cells[2].value = oglihi ? oglihi.toFixed(1) : '';
-    cells[3].value = mv ? mv.toFixed(1) : '';
+    inputs[2].value = oglihi ? oglihi.toFixed(1) : '';
+    inputs[3].value = mv ? mv.toFixed(1) : '';
 
     totalCarbs += carbs || 0;
     totalMV += mv || 0;
@@ -105,7 +107,8 @@ function calculateTotals() {
   document.getElementById('totals').innerText = `Kopā Carbs: ${totalCarbs.toFixed(1)} g | Kopā MV: ${totalMV.toFixed(1)}`;
 }
 
-table.addEventListener('input', calculateTotals);
+// Recalculate totals on input
+container.addEventListener('input', calculateTotals);
 calculateTotals();
 </script>
 
