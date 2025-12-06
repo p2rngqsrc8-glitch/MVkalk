@@ -16,8 +16,8 @@
     gap: 5px;
   }
 
-  .item label { font-size: 20px; }
-  .item input { font-size: 22px; padding: 6px; text-align: center; }
+  .item label { font-size: 22px; }
+  .item input { font-size: 24px; padding: 6px; text-align: center; }
 
   .buttons {
     display: flex;
@@ -25,13 +25,13 @@
     gap: 10px;
   }
 
-  .buttons button { font-size: 22px; padding: 6px 12px; }
+  .buttons button { font-size: 24px; padding: 6px 12px; }
 
-  #totals { margin-top: 10px; font-weight: bold; font-size: 22px; }
+  #totals { margin-top: 10px; font-weight: bold; font-size: 24px; }
 
   @media only screen and (max-width: 400px) {
-    .item input { font-size: 24px; }
-    .buttons button { font-size: 24px; padding: 8px 14px; }
+    .item input { font-size: 26px; }
+    .buttons button { font-size: 26px; padding: 8px 14px; }
   }
 </style>
 </head>
@@ -89,22 +89,22 @@ function calculateTotals() {
 
   container.querySelectorAll('.item').forEach(item => {
     const inputs = item.querySelectorAll('input');
-    const weight = parseFloat(inputs[0].value);
-    const carbs100 = parseFloat(inputs[1].value);
-    let oglihi = parseFloat(inputs[2].value);
-    let mvValue = parseFloat(inputs[3].value);
+    const weight = parseFloat(inputs[0].value) || 0;
+    const carbs100 = parseFloat(inputs[1].value) || 0;
+    let oglihi = parseFloat(inputs[2].value) || 0;
+    let mvValue = parseFloat(inputs[3].value) || 0;
 
     let carbs = 0;
     let mv = 0;
 
-    // Ja tikai MV ir ievadīts
-    if((isNaN(weight) || weight===0) && (isNaN(carbs100) || carbs100===0) && !isNaN(mvValue) && mvValue>0) {
+    // Ja Grami un Carb/100g nav ievadīti, bet MV ir
+    if(weight === 0 && carbs100 === 0 && mvValue > 0) {
       mv = mvValue;
       carbs = mv * carbsPerMV;
       oglihi = carbs;
     } 
     // Ja ievadīti Grami un Carb/100g
-    else if(!isNaN(weight) && !isNaN(carbs100)) {
+    else if(weight > 0 && carbs100 > 0) {
       carbs = weight * carbs100 / 100;
       oglihi = carbs;
       mv = carbs / carbsPerMV;
