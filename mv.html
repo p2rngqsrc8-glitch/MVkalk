@@ -1,162 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="lv">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MV kalkulators</title>
+<title>MV Kalkulators</title>
 <style>
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  padding: 20px;
-  background: #f4f4f4;
-}
-input {
-  width: 80px;
-  padding: 4px;
-  font-size: 16px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-td, th {
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: center;
-}
-button {
-  padding: 4px 8px;
-  font-size: 16px;
-}
-h2, h3 {
-  margin-top: 15px;
-}
+  body { font-family: Arial, sans-serif; margin: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size:14px; table-layout:auto; }
+  th, td { border: 1px solid #ccc; text-align: center; padding: 2px 4px; white-space: nowrap; }
+  input { width: 50px; text-align: center; }
+  button { padding: 2px 6px; margin: 0 1px; }
+  #totals { margin-top: 10px; font-weight: bold; }
 </style>
 </head>
 <body>
 
-<h2>Maizes vienību kalkulators</h2>
-
-<label>1 MV = 
-  <input id="mvFactor" type="number" value="12" oninput="calc(); save()" style="width:60px;">
-  g ogļhidrātu
-</label>
-
-<br><br>
-
-<table id="tbl">
-<tr>
-<th>Grami</th>
-<th>Carbs/100g</th>
-<th>Ogļhidrāti</th>
-<th>MV</th>
-<th></th>
-</tr>
+<h2>MV Kalkulators</h2>
+<table id="foodTable">
+  <thead>
+    <tr>
+      <th>Grami</th>
+      <th>Carb</th>
+      <th>Oglihi</th>
+      <th>MV</th>
+      <th>Act</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><input type="number" min="0" placeholder="g"></td>
+      <td><input type="number" min="0" placeholder="c/100g"></td>
+      <td><input type="number" min="0" placeholder="g"></td>
+      <td><input type="number" min="0" placeholder="MV"></td>
+      <td>
+        <button onclick="deleteRow(this)">-</button>
+        <button onclick="addRow(this)">+</button>
+      </td>
+    </tr>
+  </tbody>
 </table>
 
-<h3>Kopā: <span id="totalMV">0</span> MV</h3>
-
-<label>Insulīna koeficients (U/MV):
-  <input id="insulinCoef" type="number" value="1" oninput="calc(); save()" style="width:60px;">
-</label>
-
-<h3>Ieteiktais boluss: <span id="bolus">0</span> U</h3>
+<div id="totals">Kopā Carbs: 0 g | Kopā MV: 0</div>
 
 <script>
-function addRow(index, grams="", carbs100="") {
-  let table = document.getElementById("tbl");
-  let row = table.insertRow(index);
+const carbsPerMV = 12; // 1 MV = 12 g ogļhidrāti
+const table = document.getElementById('foodTable').getElementsByTagName('tbody')[0];
 
-  let g = row.insertCell(0);
-  let c = row.insertCell(1);
-  let carbs = row.insertCell(2);
-  let mv = row.insertCell(3);
-  let actions = row.insertCell(4);
-
-  g.innerHTML = `<input type="number" placeholder="100" value="${grams}" oninput="calc(); save()">`;
-  c.innerHTML = `<input type="number" placeholder="40" value="${carbs100}" oninput="calc(); save()">`;
-  carbs.innerText = "0";
-  mv.innerText = "0";
-
-  actions.innerHTML = `
-    <button onclick="addRow(this.parentNode.parentNode.rowIndex + 1)">+</button>
-    <button onclick="deleteRow(this)">−</button>
-  `;
-
-  calc();
-  save();
+function addRow(btn) {
+  const row = btn.parentElement.parentElement;
+  const newRow = row.cloneNode(true);
+  newRow.querySelectorAll('input').forEach(input => input.value = '');
+  table.appendChild(newRow);
+  calculateTotals();
 }
 
 function deleteRow(btn) {
-  let row = btn.parentNode.parentNode;
-  let table = document.getElementById("tbl");
-  table.deleteRow(row.rowIndex);
-  if (table.rows.length === 1) { // ja nav nevienas rindu, pievieno tukšu
-    addRow(1);
+  const row = btn.parentElement.parentElement;
+  if(table.rows.length > 1) {
+    row.remove();
+    calculateTotals();
   }
-  calc();
-  save();
 }
 
-function calc() {
-  let table = document.getElementById("tbl");
+function calculateTotals() {
+  let totalCarbs = 0;
   let totalMV = 0;
-  let mvFactor = parseFloat(document.getElementById("mvFactor").value) || 12;
-  let insulinCoef = parseFloat(document.getElementById("insulinCoef").value) || 1;
 
-  for (let r = 1; r < table.rows.length; r++) {
-    let grams = parseFloat(table.rows[r].cells[0].children[0].value) || 0;
-    let carbs100 = parseFloat(table.rows[r].cells[1].children[0].value) || 0;
+  table.querySelectorAll('tr').forEach(row => {
+    const cells = row.querySelectorAll('input');
+    const weight = parseFloat(cells[0].value);
+    const carbs100 = parseFloat(cells[1].value);
+    let oglihi = parseFloat(cells[2].value);
+    let mvValue = parseFloat(cells[3].value);
 
-    let carbs = (grams * carbs100) / 100;
-    let mv = carbs / mvFactor;
+    let carbs = 0;
+    let mv = 0;
 
-    table.rows[r].cells[2].innerText = carbs.toFixed(1);
-    table.rows[r].cells[3].innerText = mv.toFixed(2);
-
-    totalMV += mv;
-  }
-
-  document.getElementById("totalMV").innerText = totalMV.toFixed(2);
-  document.getElementById("bolus").innerText = (totalMV * insulinCoef).toFixed(1);
-}
-
-function save() {
-  let rows = [];
-  let table = document.getElementById("tbl");
-
-  for (let r = 1; r < table.rows.length; r++) {
-    rows.push({
-      grams: table.rows[r].cells[0].children[0].value,
-      carbs100: table.rows[r].cells[1].children[0].value
-    });
-  }
-
-  localStorage.setItem("mvRows", JSON.stringify(rows));
-  localStorage.setItem("mvFactor", document.getElementById("mvFactor").value);
-  localStorage.setItem("insulinCoef", document.getElementById("insulinCoef").value);
-}
-
-function load() {
-  let savedRows = JSON.parse(localStorage.getItem("mvRows") || "[]");
-
-  document.getElementById("mvFactor").value =
-    localStorage.getItem("mvFactor") || 12;
-
-  document.getElementById("insulinCoef").value =
-    localStorage.getItem("insulinCoef") || 1;
-
-  if (savedRows.length === 0) {
-    addRow(1);
-  } else {
-    for (let i = 0; i < savedRows.length; i++) {
-      addRow(i + 1, savedRows[i].grams, savedRows[i].carbs100);
+    if((isNaN(weight) || weight===0) && (isNaN(carbs100) || carbs100===0) && !isNaN(mvValue) && mvValue>0) {
+      // Ja svars un carbs tukši, bet MV ierakstīts
+      mv = mvValue;
+      carbs = mv * carbsPerMV;
+      oglihi = carbs; // parādām kopējo carbs
+    } else if(!isNaN(weight) && !isNaN(carbs100)) {
+      carbs = weight * carbs100 / 100;
+      oglihi = carbs;
+      mv = carbs / carbsPerMV;
     }
-  }
+
+    cells[2].value = oglihi ? oglihi.toFixed(1) : '';
+    cells[3].value = mv ? mv.toFixed(1) : '';
+
+    totalCarbs += carbs || 0;
+    totalMV += mv || 0;
+  });
+
+  document.getElementById('totals').innerText = `Kopā Carbs: ${totalCarbs.toFixed(1)} g | Kopā MV: ${totalMV.toFixed(1)}`;
 }
 
-load();
+// Recalculate totals on input change
+table.addEventListener('input', calculateTotals);
+
+// Initialize totals
+calculateTotals();
 </script>
 
 </body>
