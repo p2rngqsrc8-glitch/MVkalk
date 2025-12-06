@@ -5,33 +5,35 @@
 <title>MV Kalkulators Vertikāli</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 10px; }
-  h2 { margin-bottom: 10px; }
+  h2 { margin-bottom: 10px; font-size: 30px; }
 
   .item {
     border: 1px solid #ccc;
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
   }
 
-  .item label { font-size: 22px; }
-  .item input { font-size: 24px; padding: 6px; text-align: center; }
+  .item label { font-size: 28px; }
+  .item input { font-size: 32px; padding: 8px; text-align: center; }
 
   .buttons {
     display: flex;
     justify-content: flex-start;
-    gap: 10px;
+    gap: 12px;
   }
 
-  .buttons button { font-size: 24px; padding: 6px 12px; }
+  .buttons button { font-size: 30px; padding: 8px 14px; }
 
-  #totals { margin-top: 10px; font-weight: bold; font-size: 24px; }
+  #totals { margin-top: 12px; font-weight: bold; font-size: 28px; }
 
   @media only screen and (max-width: 400px) {
-    .item input { font-size: 26px; }
-    .buttons button { font-size: 26px; padding: 8px 14px; }
+    .item input { font-size: 36px; }
+    .buttons button { font-size: 34px; padding: 10px 16px; }
+    h2 { font-size: 34px; }
+    #totals { font-size: 32px; }
   }
 </style>
 </head>
