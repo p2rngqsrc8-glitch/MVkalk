@@ -1,162 +1,160 @@
 <!DOCTYPE html>
-<html>
+<html lang="lv">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MV kalkulators</title>
+<title>MV Kalkulators Vertikāli</title>
 <style>
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  padding: 20px;
-  background: #f4f4f4;
-}
-input {
-  width: 80px;
-  padding: 4px;
-  font-size: 16px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-td, th {
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: center;
-}
-button {
-  padding: 4px 8px;
-  font-size: 16px;
-}
-h2, h3 {
-  margin-top: 15px;
-}
+  body { font-family: Arial, sans-serif; margin: 10px; }
+  h2 { margin-bottom: 10px; }
+
+  .item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .item label { font-size: 20px; }
+  .item input { font-size: 22px; padding: 6px; text-align: center; }
+
+  .buttons {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .buttons button { font-size: 22px; padding: 6px 12px; }
+
+  #totals { margin-top: 10px; font-weight: bold; font-size: 22px; }
+
+  @media only screen and (max-width: 400px) {
+    .item input { font-size: 24px; }
+    .buttons button { font-size: 24px; padding: 8px 14px; }
+  }
 </style>
 </head>
 <body>
 
-<h2>Maizes vienību kalkulators</h2>
+<h2>MV Kalkulators Vertikāli</h2>
 
-<label>1 MV = 
-  <input id="mvFactor" type="number" value="12" oninput="calc(); save()" style="width:60px;">
-  g ogļhidrātu
-</label>
+<div id="foodContainer"></div>
 
-<br><br>
-
-<table id="tbl">
-<tr>
-<th>Grami</th>
-<th>Carbs/100g</th>
-<th>Ogļhidrāti</th>
-<th>MV</th>
-<th></th>
-</tr>
-</table>
-
-<h3>Kopā: <span id="totalMV">0</span> MV</h3>
-
-<label>Insulīna koeficients (U/MV):
-  <input id="insulinCoef" type="number" value="1" oninput="calc(); save()" style="width:60px;">
-</label>
-
-<h3>Ieteiktais boluss: <span id="bolus">0</span> U</h3>
+<div id="totals">Kopā Carbs: 0 g | Kopā MV: 0</div>
 
 <script>
-function addRow(index, grams="", carbs100="") {
-  let table = document.getElementById("tbl");
-  let row = table.insertRow(index);
+const carbsPerMV = 12;
+const container = document.getElementById('foodContainer');
 
-  let g = row.insertCell(0);
-  let c = row.insertCell(1);
-  let carbs = row.insertCell(2);
-  let mv = row.insertCell(3);
-  let actions = row.insertCell(4);
+// Saglabāt localStorage atslēga
+const storageKey = 'mvData';
 
-  g.innerHTML = `<input type="number" placeholder="100" value="${grams}" oninput="calc(); save()">`;
-  c.innerHTML = `<input type="number" placeholder="40" value="${carbs100}" oninput="calc(); save()">`;
-  carbs.innerText = "0";
-  mv.innerText = "0";
-
-  actions.innerHTML = `
-    <button onclick="addRow(this.parentNode.parentNode.rowIndex + 1)">+</button>
-    <button onclick="deleteRow(this)">−</button>
+// Funkcija, lai izveidotu jaunu item
+function createItem(data={weight:'', carbs100:'', oglihi:'', mv:''}) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.innerHTML = `
+    <label>Grami: <input type="number" min="0" placeholder="g" value="${data.weight}"></label>
+    <label>Carb: <input type="number" min="0" placeholder="c/100g" value="${data.carbs100}"></label>
+    <label>Oglihi: <input type="number" min="0" placeholder="g" value="${data.oglihi}"></label>
+    <label>MV: <input type="number" min="0" placeholder="MV" value="${data.mv}"></label>
+    <div class="buttons">
+      <button onclick="deleteItem(this)">-</button>
+      <button onclick="addItem(this)">+</button>
+    </div>
   `;
-
-  calc();
-  save();
+  container.appendChild(div);
 }
 
-function deleteRow(btn) {
-  let row = btn.parentNode.parentNode;
-  let table = document.getElementById("tbl");
-  table.deleteRow(row.rowIndex);
-  if (table.rows.length === 1) { // ja nav nevienas rindu, pievieno tukšu
-    addRow(1);
+// Funkcija + 
+function addItem(btn) {
+  const item = btn.closest('.item');
+  createItem();
+  calculateTotals();
+  saveData();
+}
+
+// Funkcija - 
+function deleteItem(btn) {
+  const item = btn.closest('.item');
+  if(container.children.length > 1) {
+    item.remove();
+    calculateTotals();
+    saveData();
   }
-  calc();
-  save();
 }
 
-function calc() {
-  let table = document.getElementById("tbl");
+// Aprēķins
+function calculateTotals() {
+  let totalCarbs = 0;
   let totalMV = 0;
-  let mvFactor = parseFloat(document.getElementById("mvFactor").value) || 12;
-  let insulinCoef = parseFloat(document.getElementById("insulinCoef").value) || 1;
 
-  for (let r = 1; r < table.rows.length; r++) {
-    let grams = parseFloat(table.rows[r].cells[0].children[0].value) || 0;
-    let carbs100 = parseFloat(table.rows[r].cells[1].children[0].value) || 0;
+  container.querySelectorAll('.item').forEach(item => {
+    const inputs = item.querySelectorAll('input');
+    const weight = parseFloat(inputs[0].value);
+    const carbs100 = parseFloat(inputs[1].value);
+    let oglihi = parseFloat(inputs[2].value);
+    let mvValue = parseFloat(inputs[3].value);
 
-    let carbs = (grams * carbs100) / 100;
-    let mv = carbs / mvFactor;
+    let carbs = 0;
+    let mv = 0;
 
-    table.rows[r].cells[2].innerText = carbs.toFixed(1);
-    table.rows[r].cells[3].innerText = mv.toFixed(2);
-
-    totalMV += mv;
-  }
-
-  document.getElementById("totalMV").innerText = totalMV.toFixed(2);
-  document.getElementById("bolus").innerText = (totalMV * insulinCoef).toFixed(1);
-}
-
-function save() {
-  let rows = [];
-  let table = document.getElementById("tbl");
-
-  for (let r = 1; r < table.rows.length; r++) {
-    rows.push({
-      grams: table.rows[r].cells[0].children[0].value,
-      carbs100: table.rows[r].cells[1].children[0].value
-    });
-  }
-
-  localStorage.setItem("mvRows", JSON.stringify(rows));
-  localStorage.setItem("mvFactor", document.getElementById("mvFactor").value);
-  localStorage.setItem("insulinCoef", document.getElementById("insulinCoef").value);
-}
-
-function load() {
-  let savedRows = JSON.parse(localStorage.getItem("mvRows") || "[]");
-
-  document.getElementById("mvFactor").value =
-    localStorage.getItem("mvFactor") || 12;
-
-  document.getElementById("insulinCoef").value =
-    localStorage.getItem("insulinCoef") || 1;
-
-  if (savedRows.length === 0) {
-    addRow(1);
-  } else {
-    for (let i = 0; i < savedRows.length; i++) {
-      addRow(i + 1, savedRows[i].grams, savedRows[i].carbs100);
+    if((isNaN(weight) || weight===0) && (isNaN(carbs100) || carbs100===0) && !isNaN(mvValue) && mvValue>0) {
+      mv = mvValue;
+      carbs = mv * carbsPerMV;
+      oglihi = carbs;
+    } else if(!isNaN(weight) && !isNaN(carbs100)) {
+      carbs = weight * carbs100 / 100;
+      oglihi = carbs;
+      mv = carbs / carbsPerMV;
     }
-  }
+
+    inputs[2].value = oglihi ? oglihi.toFixed(1) : '';
+    inputs[3].value = mv ? mv.toFixed(1) : '';
+
+    totalCarbs += carbs || 0;
+    totalMV += mv || 0;
+  });
+
+  document.getElementById('totals').innerText = `Kopā Carbs: ${totalCarbs.toFixed(1)} g | Kopā MV: ${totalMV.toFixed(1)}`;
+  saveData();
 }
 
-load();
+// Saglabā localStorage
+function saveData() {
+  const data = [];
+  container.querySelectorAll('.item').forEach(item => {
+    const inputs = item.querySelectorAll('input');
+    data.push({
+      weight: inputs[0].value,
+      carbs100: inputs[1].value,
+      oglihi: inputs[2].value,
+      mv: inputs[3].value
+    });
+  });
+  localStorage.setItem(storageKey, JSON.stringify(data));
+}
+
+// Ielādē localStorage
+function loadData() {
+  const data = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  if(data.length === 0) {
+    createItem();
+  } else {
+    data.forEach(d => createItem(d));
+  }
+  calculateTotals();
+}
+
+// Recalculate on input change
+container.addEventListener('input', () => {
+  calculateTotals();
+  saveData();
+});
+
+// Inicializācija
+loadData();
 </script>
 
 </body>
