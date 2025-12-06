@@ -6,10 +6,17 @@
 <style>
   body { font-family: Arial, sans-serif; margin: 10px; }
   table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-  th, td { border: 1px solid #ccc; text-align: center; padding: 4px; font-size: 18px; white-space: nowrap; }
+  th, td { border: 1px solid #ccc; text-align: center; padding: 4px; white-space: nowrap; font-size: 18px; }
   input { width: 70px; font-size: 18px; text-align: center; }
   button { font-size: 18px; padding: 6px 12px; margin: 0 2px; }
   #totals { margin-top: 10px; font-weight: bold; font-size: 18px; }
+
+  /* Responsīvs fonts mazākos ekrānos (portrait iPhone) */
+  @media only screen and (max-width: 500px) {
+    th, td, input, button { font-size: 22px; }
+    input { width: 60px; }
+    button { padding: 8px 14px; }
+  }
 </style>
 </head>
 <body>
@@ -48,31 +55,4 @@ const table = document.getElementById('foodTable').getElementsByTagName('tbody')
 function addRow(btn) {
   const row = btn.parentElement.parentElement;
   const newRow = row.cloneNode(true);
-  newRow.querySelectorAll('input').forEach(input => input.value = '');
-  table.appendChild(newRow);
-  calculateTotals();
-}
-
-function deleteRow(btn) {
-  const row = btn.parentElement.parentElement;
-  if(table.rows.length > 1) {
-    row.remove();
-    calculateTotals();
-  }
-}
-
-function calculateTotals() {
-  let totalCarbs = 0;
-  let totalMV = 0;
-
-  table.querySelectorAll('tr').forEach(row => {
-    const cells = row.querySelectorAll('input');
-    const weight = parseFloat(cells[0].value);
-    const carbs100 = parseFloat(cells[1].value);
-    let oglihi = parseFloat(cells[2].value);
-    let mvValue = parseFloat(cells[3].value);
-
-    let carbs = 0;
-    let mv = 0;
-
-    if((isNaN(weight) || weight===0) && (isNaN(carbs
+  newRow.querySelectorAl
