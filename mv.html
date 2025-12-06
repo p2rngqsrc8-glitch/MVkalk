@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>MV Kalkulators Vertikāli</title>
-<!-- Šis tags nodrošina, ka fonti un lauki uzreiz būs pareiza izmēra mobilajā -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <style>
   body { font-family: Arial, sans-serif; margin: 10px; }
@@ -73,7 +72,6 @@ function createItem(data={weight:'', carbs100:'', oglihi:'', mv:''}) {
 function addItem(btn) {
   createItem();
   calculateTotals();
-  saveData();
 }
 
 // Dzēš item
@@ -82,7 +80,6 @@ function deleteItem(btn) {
   if(container.children.length > 1) {
     item.remove();
     calculateTotals();
-    saveData();
   }
 }
 
@@ -122,42 +119,23 @@ function calculateTotals() {
   });
 
   document.getElementById('totals').innerText = `Kopā Carbs: ${totalCarbs.toFixed(1)} g | Kopā MV: ${totalMV.toFixed(1)}`;
-  saveData();
-}
-
-// Saglabā localStorage
-function saveData() {
-  const data = [];
-  container.querySelectorAll('.item').forEach(item => {
-    const inputs = item.querySelectorAll('input');
-    data.push({
-      weight: inputs[0].value,
-      carbs100: inputs[1].value,
-      oglihi: inputs[2].value,
-      mv: inputs[3].value
-    });
-  });
-  localStorage.setItem(storageKey, JSON.stringify(data));
-}
-
-// Ielādē localStorage
-function loadData() {
-  const data = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  if(data.length === 0) {
-    createItem();
-  } else {
-    data.forEach(d => createItem(d));
-  }
-  calculateTotals();
 }
 
 // Recalculate on input change
 container.addEventListener('input', () => {
   calculateTotals();
-  saveData();
 });
 
 // Inicializācija
+function loadData() {
+  // Notīrām localStorage, lai lapu atverot dati nebūtu saglabāti
+  localStorage.removeItem(storageKey);
+
+  // Sākam ar vienu tukšu rindu
+  createItem();
+  calculateTotals();
+}
+
 loadData();
 </script>
 
